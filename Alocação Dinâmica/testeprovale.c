@@ -12,8 +12,8 @@ int set_size_cache(); //Retorna o tamanho do Cache informado pelo Usuário.
 void free_list(Cache* head);
 void print_cache(Cache* head);
 Cache* pop(Cache* head); //Deleta o último elemento da lista.
-Cache* insert_node(Cache* head, int num); //Adiciona elemento no heado da lista.
-Cache* update_position(Cache* head, int num); //Atualiza o heado da lista.
+Cache* insert_node(Cache* head, int num); //Adiciona elemento no topo da lista.
+Cache* update_position(Cache* head, int num); //Atualiza o topo da lista.
 Cache* lru(Cache* head, int num, int size, int* cont); //Lógica central do algoritmo LRU.
 
 int set_size_cache(){
