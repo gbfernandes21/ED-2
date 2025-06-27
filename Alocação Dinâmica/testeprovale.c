@@ -12,7 +12,7 @@ int set_size_cache(); //Retorna o tamanho do Cache informado pelo Usuário.
 void free_list(Cache* lst);
 void print_cache(Cache* lst);
 Cache* pop(Cache* lst); //Deleta o último elemento da lista.
-Cache* set_node(Cache* lst, int num); //Adiciona elemento no topo da lista.
+Cache* insert_node(Cache* lst, int num); //Adiciona elemento no topo da lista.
 Cache* update_position(Cache* lst, int num); //Atualiza o topo da lista.
 Cache* lru(Cache* lst, int num, int size, int* cont); //Lógica central do algoritmo LRU.
 
@@ -38,7 +38,7 @@ int exist(Cache* lst, int alvo){
 	return 0;
 }
 
-Cache* set_node(Cache* lst, int num){
+Cache* insert_node(Cache* lst, int num){
 	Cache* new = malloc(sizeof(Cache));
 	
 	new->num = num;
@@ -85,12 +85,12 @@ Cache* lru(Cache* lst, int num, int size, int* cont){
 	
 	if(*cont < size){
 		(*cont)++;
-		return set_node(lst, num);
+		return insert_node(lst, num);
 	}
 	
 	lst = pop(lst);
 	
-	return set_node(lst, num);
+	return insert_node(lst, num);
 }
 
 void print_cache(Cache* lst){
