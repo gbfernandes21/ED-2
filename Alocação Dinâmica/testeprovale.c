@@ -7,14 +7,14 @@ typedef struct Cache{
 	struct Cache* prox;
 }Cache;
 
-int exist(Cache* top, int alvo);//Verifica se o valor já existe dentro do Cache.
+int exist(Cache* head, int alvo);//Verifica se o valor já existe dentro do Cache.
 int set_size_cache(); //Retorna o tamanho do Cache informado pelo Usuário.
-void free_list(Cache* top);
-void print_cache(Cache* top);
-Cache* pop(Cache* top); //Deleta o último elemento da lista.
-Cache* insert_node(Cache* top, int num); //Adiciona elemento no topo da lista.
-Cache* update_position(Cache* top, int num); //Atualiza o topo da lista.
-Cache* lru(Cache* top, int num, int size, int* cont); //Lógica central do algoritmo LRU.
+void free_list(Cache* head);
+void print_cache(Cache* head);
+Cache* pop(Cache* head); //Deleta o último elemento da lista.
+Cache* insert_node(Cache* head, int num); //Adiciona elemento no heado da lista.
+Cache* update_position(Cache* head, int num); //Atualiza o heado da lista.
+Cache* lru(Cache* head, int num, int size, int* cont); //Lógica central do algoritmo LRU.
 
 int set_size_cache(){
 	int size;
@@ -28,90 +28,90 @@ int set_size_cache(){
 	}while(1);
 }
 
-int exist(Cache* top, int alvo){
-	if(!top) return 0;
+int exist(Cache* head, int alvo){
+	if(!head) return 0;
 	
-	while(top){
-		if(top->num == alvo) return 1;
-		top = top->prox;
+	while(head){
+		if(head->num == alvo) return 1;
+		head = head->prox;
 	}
 	return 0;
 }
 
-Cache* insert_node(Cache* top, int num){
+Cache* insert_node(Cache* head, int num){
 	Cache* new = malloc(sizeof(Cache));
 	
 	new->num = num;
 	new->ant = NULL;
-	new->prox = top;
-	if(top) top->ant = new;
+	new->prox = head;
+	if(head) head->ant = new;
 	
 	return new;
 }
 
-Cache* update_position(Cache* top, int num){
-	Cache* atual = top;
+Cache* update_position(Cache* head, int num){
+	Cache* atual = head;
 	
 	while(atual){
 		if(atual->num == num) break;
 		atual = atual->prox;
 	}
 	
-	if(atual == top) return top;
+	if(atual == head) return head;
 	
 	if(atual->ant) atual->ant->prox = atual->prox;
 	
 	if(atual->prox) atual->prox->ant = atual->ant;
 	
-	atual->prox = top;
+	atual->prox = head;
 	atual->ant = NULL;
-	top->ant = atual;
+	head->ant = atual;
 		
 	return atual;
 }
 
-Cache* pop(Cache* top){
-	Cache* last = top;
+Cache* pop(Cache* head){
+	Cache* last = head;
 	
 	while(last->prox)
 		last = last->prox;
 	if(last->ant) last->ant->prox = NULL;
 	free(last);
-	return top;
+	return head;
 }
 
-Cache* lru(Cache* top, int num, int size, int* cont){
-	if(exist(top, num)) return update_position(top, num);
+Cache* lru(Cache* head, int num, int size, int* cont){
+	if(exist(head, num)) return update_position(head, num);
 	
 	if(*cont < size){
 		(*cont)++;
-		return insert_node(top, num);
+		return insert_node(head, num);
 	}
 	
-	top = pop(top);
+	head = pop(head);
 	
-	return insert_node(top, num);
+	return insert_node(head, num);
 }
 
-void print_cache(Cache* top){
-	if(!top){
+void print_cache(Cache* head){
+	if(!head){
 		printf("\n(Cache Vazio)\n");
 		return;
 	}
 	
 	printf("\nCache: [ ");
-	while(top){
-		printf("%d ", top->num);
-		top = top->prox;
+	while(head){
+		printf("%d ", head->num);
+		head = head->prox;
 	}
 	printf("]\n");
 }
 
-void free_list(Cache* top){
-	while(top){
-		Cache* next = top->prox;
-		free(top);
-		top = next;
+void free_list(Cache* head){
+	while(head){
+		Cache* next = head->prox;
+		free(head);
+		head = next;
 	}
 }
 
