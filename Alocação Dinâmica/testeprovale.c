@@ -1,111 +1,135 @@
-/*GABRIEL FERNANDES DOS SANTOS
- * QUINTA-FEIRA, 26/06/2025
- * BSI, TURMA 124*/
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
-#define MAX 10
+typedef struct Cache{
+	int num;
+	struct Cache* ant;
+	struct Cache* prox;
+}Cache;
 
-typedef struct No{
-	int dado;
-	struct No* prox;
-}No;
+int exist(Cache* lst, int alvo);//Verifica se o valor já existe dentro do Cache.
+int set_size_cache(); //Retorna o tamanho do Cache informado pelo Usuário.
+void free_list(Cache* lst);
+void print_cache(Cache* lst);
+Cache* pop(Cache* lst); //Deleta o último elemento da lista.
+Cache* set_node(Cache* lst, int num); //Adiciona elemento no topo da lista.
+Cache* update_position(Cache* lst, int num); //Atualiza o topo da lista.
+Cache* lru(Cache* lst, int num, int size, int* cont); //Lógica central do algoritmo LRU.
 
-No* preencher_lista(No* lst); //Preenche a lista com números aleatórios até receber um valor == 0.
-int interface();
-void wait();
-void printLine(int n);
-void printar_lista(No* lst); //Mostra todos os valores da lista.
-void acessar_memoria(No* lst);
-void mostrar_cache(No* lst, int tam); //Mostra os valores presentes no Cache com base no tamanho informado pelo usuário.
-
-void wait(){
-	setbuf(stdin, NULL);
-	getchar();
+int set_size_cache(){
+	int size;
+	
+	do{
+		system("clear");
+		printf("Tamanho do Cache: ");
+		scanf(" %d", &size);
+		if(size <= 0) continue;
+		return size;
+	}while(1);
 }
 
-void printLine(int n){
-	for (int i = 0; i < n; i++)
-		printf("-");
-	printf("\n");
-}
-
-No* preencher_lista(No* lst){
-	No* new = malloc(sizeof(No));
+int exist(Cache* lst, int alvo){
+	if(!lst) return 0;
 	
-	new->dado = rand()%MAX;
-	new->prox = lst;
-	
-	if(new->dado)
-		return preencher_lista(new); 
-	return new; 
-}
-
-void printar_lista(No* lst){
-	if(!lst) return;
-	
-	printar_lista(lst->prox);
-	printf("[%d] ", lst->dado); //Printa os valores "Empilhados" pela recursão.
-}
-
-void mostrar_cache(No* lst, int tam){
-	int cont = 0;
-	int v[MAX] = {0}; //Controla os valores que já foram printados.
-	
-	while(cont < tam && lst){
-		int i = lst->dado;
-		
-		if(!v[i] && i){ //Se determinado valor ainda não foi printado, sendo esse valor != 0...
-			printf("[%d] ", i);
-			v[i] = 1;
-			cont++;
-		}
-		
+	while(lst){
+		if(lst->num == alvo) return 1;
 		lst = lst->prox;
+	}
+	return 0;
+}
+
+Cache* set_node(Cache* lst, int num){
+	Cache* new = malloc(sizeof(Cache));
+	
+	new->num = num;
+	new->ant = NULL;
+	new->prox = lst;
+	if(lst) lst->ant = new;
+	
+	return new;
+}
+
+Cache* update_position(Cache* lst, int num){
+	Cache* atual = lst;
+	
+	while(atual){
+		if(atual->num == num) break;
+		atual = atual->prox;
+	}
+	
+	if(atual == lst) return lst;
+	
+	if(atual->ant) atual->ant->prox = atual->prox;
+	
+	if(atual->prox) atual->prox->ant = atual->ant;
+	
+	atual->prox = lst;
+	atual->ant = NULL;
+	lst->ant = atual;
+		
+	return atual;
+}
+
+Cache* pop(Cache* lst){
+	Cache* last = lst;
+	
+	while(last->prox)
+		last = last->prox;
+	if(last->ant) last->ant->prox = NULL;
+	free(last);
+	return lst;
+}
+
+Cache* lru(Cache* lst, int num, int size, int* cont){
+	if(exist(lst, num)) return update_position(lst, num);
+	
+	if(*cont < size){
+		(*cont)++;
+		return set_node(lst, num);
+	}
+	
+	lst = pop(lst);
+	
+	return set_node(lst, num);
+}
+
+void print_cache(Cache* lst){
+	if(!lst){
+		printf("\n(Cache Vazio)\n");
+		return;
+	}
+	
+	printf("\nCache: [ ");
+	while(lst){
+		printf("%d ", lst->num);
+		lst = lst->prox;
+	}
+	printf("]\n");
+}
+
+void free_list(Cache* lst){
+	while(lst){
+		Cache* next = lst->prox;
+		free(lst);
+		lst = next;
 	}
 }
 
-int interface(){
-	system("clear");
-	printLine(40);
-	printf("\n1 - ACESSAR MEMÓRIA\n\n0 - SAIR\n\n");
-	printLine(40);
-	
-	int op;
-	printf("Opção: ");
-	scanf(" %d", &op);
-	
-	return op;
-}
-
-void acessar_memoria(No* lst){
-	system("clear");
-	printf("Tamanho do cache: ");
-	int tam;
-	scanf(" %d", &tam);
-	
-	printf("\nValores: ");
-	printar_lista(lst);
-	printf("\n\nCache: ");
-	mostrar_cache(lst, tam);
-	wait();
-}
-
 int main(){
-	srand(time(NULL));
-	No* lst = NULL;
-	lst = preencher_lista(lst);
+	Cache* cache = NULL;
+	int num, cont = 0, tam = set_size_cache();
+	printf("\nValores: ");
 	
 	do{
-		switch(interface()){
-			case 0: return 0;
-			case 1: acessar_memoria(lst);
-			break;
-			default: printf("Opção Inválida!\n");
-			wait();
-			break;
-		}
+		scanf(" %d", &num);
+		
+		if(num <= 0) break;
+
+		cache = lru(cache, num, tam, &cont);
 	}while(1);
+	
+	print_cache(cache);
+	free_list(cache);
+	
+	return 0;
 }
