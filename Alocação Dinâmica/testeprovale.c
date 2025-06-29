@@ -1,20 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Cache{
-	int num;
-	struct Cache* ant;
-	struct Cache* prox;
-}Cache;
+#define MIN_SIZE_CACHE 1
 
-int exist(Cache* head, int alvo);//Verifica se o valor já existe dentro do Cache.
-int set_size_cache(); //Retorna o tamanho do Cache informado pelo Usuário.
-void free_list(Cache* head);
-void print_cache(Cache* head);
-Cache* pop(Cache* head); //Deleta o último elemento da lista.
-Cache* insert_node(Cache* head, int num); //Adiciona elemento no topo da lista.
-Cache* update_position(Cache* head, int num); //Atualiza o topo da lista.
-Cache* lru(Cache* head, int num, int size, int* cont); //Lógica central do algoritmo LRU.
+typedef struct Cache{
+	int value;
+	struct Cache* prev;
+	struct Cache* next;
+}Cache;
 
 int set_size_cache(){
 	int size;
@@ -28,108 +21,104 @@ int set_size_cache(){
 	}while(1);
 }
 
-int exist(Cache* head, int alvo){
-	if(!head) return 0;
-	
-	while(head){
-		if(head->num == alvo) return 1;
-		head = head->prox;
-	}
-	return 0;
-}
-
-Cache* insert_node(Cache* head, int num){
+Cache* insert_node_head_list(Cache* head_list, int value){
 	Cache* new = malloc(sizeof(Cache));
 	
-	new->num = num;
-	new->ant = NULL;
-	new->prox = head;
-	if(head) head->ant = new;
+	new->value = value;
+	new->prev = NULL;
+	new->next = head_list;
+	if(head_list) head_list->prev = new;
 	
 	return new;
 }
 
-Cache* update_position(Cache* head, int num){
-	Cache* atual = head;
+Cache* update_head_list(Cache* head_list, int target){
+	if(head_list->value == target) return head_list;
 	
-	while(atual){
-		if(atual->num == num) break;
-		atual = atual->prox;
+	Cache* new_head = head_list->next;
+	
+	while(new_head){
+		if(new_head->value == target) break;
+		new_head = new_head->next;
 	}
 	
-	if(atual == head) return head;
+	new_head->prev->next = new_head->next;
 	
-	if(atual->ant) atual->ant->prox = atual->prox;
+	if(new_head->next) new_head->next->prev = new_head->prev;
 	
-	if(atual->prox) atual->prox->ant = atual->ant;
+	new_head->prev = NULL;
+	new_head->next = head_list;
+	head_list->prev = new_head;
 	
-	atual->prox = head;
-	atual->ant = NULL;
-	head->ant = atual;
-		
-	return atual;
+	return new_head;
 }
 
-Cache* pop(Cache* head){
-	Cache* last = head;
+Cache* pop(Cache* head_list){
+	Cache* last = head_list;
 	
-	while(last->prox)
-		last = last->prox;
-	if(last->ant) last->ant->prox = NULL;
+	while(last->next)
+		last = last->next;
+	last->prev->next = NULL;
 	free(last);
-	return head;
+	
+	return head_list;
 }
 
-Cache* lru(Cache* head, int num, int size, int* cont){
-	if(exist(head, num)) return update_position(head, num);
+int exist_value_in_list(Cache* head_list, int target){
+	while(head_list){
+		if(head_list->value == target) return 1;
+		head_list = head_list->next;
+	}
+	return 0;
+}
+
+Cache* lru(Cache* head_list, int value, int size_cache, int* count){
+	if(exist_value_in_list(head_list, value)) return update_head_list(head_list, value);
 	
-	if(*cont < size){
-		(*cont)++;
-		return insert_node(head, num);
+	if(*count < size_cache){
+		(*count)++;
+		return insert_node_head_list(head_list, value);
 	}
 	
-	head = pop(head);
-	
-	return insert_node(head, num);
+	(size_cache == MIN_SIZE_CACHE) ? head_list = NULL : pop(head_list);
+		
+	return insert_node_head_list(head_list, value);
 }
 
-void print_cache(Cache* head){
-	if(!head){
+void print_cache(Cache* head_list){
+	if(!head_list)
 		printf("\n(Cache Vazio)\n");
-		return;
+	else{
+		printf("\nCache: [ ");
+		while(head_list){
+			printf("%d ", head_list->value);
+			head_list = head_list->next;
+		}
+		printf("]\n");
 	}
-	
-	printf("\nCache: [ ");
-	while(head){
-		printf("%d ", head->num);
-		head = head->prox;
-	}
-	printf("]\n");
 }
 
-void free_list(Cache* head){
-	while(head){
-		Cache* next = head->prox;
-		free(head);
-		head = next;
+void free_cache(Cache* head_list){
+	while(head_list){
+		Cache* next = head_list->next;
+		free(head_list);
+		head_list = next;
 	}
 }
 
 int main(){
 	Cache* cache = NULL;
-	int num, cont = 0, tam = set_size_cache();
+	int value, count = 0, size = set_size_cache();
 	printf("\nValores: ");
 	
 	do{
-		scanf(" %d", &num);
-		
-		if(num <= 0) break;
-
-		cache = lru(cache, num, tam, &cont);
+		scanf(" %d", &value);
+		if(value <= 0) break;
+		cache = lru(cache, value, size, &count);
 	}while(1);
 	
 	print_cache(cache);
-	free_list(cache);
+	free_cache(cache);
 	
 	return 0;
 }
